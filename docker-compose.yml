@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:latest
+    ports:
+      - "5430:5432"
+    environment:
+      POSTGRES_DB: jedha
+      POSTGRES_USER: jedha
+      POSTGRES_PASSWORD: password
+
+    volumes:
+      - db-data:/var/lib/postgresql/data
+volumes:
+  db-data:
