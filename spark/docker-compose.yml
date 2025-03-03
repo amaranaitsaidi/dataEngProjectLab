@@ -1,0 +1,17 @@
+version: '3'
+
+services:
+  pyspark:
+    image: jupyter/pyspark-notebook:latest
+    container_name: pyspark-jupyter
+    ports:
+      - "8888:8888"
+      # Port pour accéder à l'UI de Spark
+      - "4040:4040"
+    volumes:
+      - ./notebooks:/home/jovyan/work
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - JUPYTER_TOKEN=
+      - GRANT_SUDO=yes
+    command: start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''
