@@ -8,4 +8,13 @@ RUN pip install boto3 && \
     https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.1/hadoop-aws-3.3.1.jar && \
     wget -P /usr/local/spark/jars/ \
     https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.11.901/aws-java-sdk-bundle-1.11.901.jar
+
+# Ajouter le pilote JDBC PostgreSQL pour Redshift
+RUN wget -P /usr/local/spark/jars/ \
+    https://jdbc.postgresql.org/download/postgresql-42.3.1.jar
+
+# Redshift 
+RUN wget -P /usr/local/spark/jars/ \
+    https://s3.amazonaws.com/redshift-downloads/drivers/jdbc/2.1.0.9/redshift-jdbc42-2.1.0.9.jar
+
 USER jovyan
