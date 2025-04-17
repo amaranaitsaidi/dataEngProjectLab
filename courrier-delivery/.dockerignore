@@ -1,0 +1,5 @@
+delivery/
+*.db
+*.log
+__pycache__/
+output_data/
