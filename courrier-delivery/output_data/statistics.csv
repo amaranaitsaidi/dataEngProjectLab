@@ -1,0 +1,2 @@
+total_deliveries,delayed_deliveries,on_time_deliveries,delay_rate,avg_delivery_time,min_delivery_time,max_delivery_time
+1000,90,910,9.0,98.71,22.5,756.5

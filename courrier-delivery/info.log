@@ -1,26 +1,25 @@
-2025-04-17 16:48:27,145 - INFO - Starting SuperCourier ETL pipeline
-2025-04-17 16:48:27,145 - INFO - Creating SQLite database...
-2025-04-17 16:48:27,170 - INFO - Database created with 1000 deliveries
-2025-04-17 16:48:27,171 - INFO - Generating weather data...
-2025-04-17 16:48:27,180 - INFO - Weather data generated for period 2025-01-17 - 2025-04-17
-2025-04-17 16:48:27,180 - INFO - Extracting data from SQLite database...
-2025-04-17 16:48:27,183 - INFO - Extraction complete: 1000 records
-2025-04-17 16:48:27,183 - INFO - Transforming data...
-2025-04-17 16:48:27,183 - INFO - Generating tracking logs...
-2025-04-17 16:48:27,198 - INFO - Tracking logs generated
-2025-04-17 16:48:27,207 - INFO - Enriching with weather data...
-2025-04-17 16:48:27,207 - INFO - Weather data structure: <class 'dict'>
-2025-04-17 16:48:27,208 - INFO - Weather data keys sample: ['2025-01-17', '2025-01-18', '2025-01-19']
-2025-04-17 16:48:27,212 - INFO - Weather enrichment complete
-2025-04-17 16:48:27,240 - INFO - Data transformation complete
-2025-04-17 16:48:27,246 - INFO - Validating and saving results...
-2025-04-17 16:48:27,248 - WARNING - Found 57 outliers in delivery time.
-2025-04-17 16:48:27,249 - INFO - Dataset Statistics:
-2025-04-17 16:48:27,249 - INFO -   total_deliveries: 1000
-2025-04-17 16:48:27,249 - INFO -   delayed_deliveries: 0
-2025-04-17 16:48:27,250 - INFO -   on_time_deliveries: 1000
-2025-04-17 16:48:27,250 - INFO -   avg_delivery_time: 89.88
-2025-04-17 16:48:27,250 - INFO -   min_delivery_time: 26.5
-2025-04-17 16:48:27,250 - INFO -   max_delivery_time: 406.8
-2025-04-17 16:48:27,264 - INFO - Results saved to output_data\deliveries.csv
-2025-04-17 16:48:27,264 - INFO - ETL pipeline completed successfully
+2025-05-14 16:33:39,173 - INFO - Starting SuperCourier ETL pipeline
+2025-05-14 16:33:39,173 - INFO - Creating SQLite database...
+2025-05-14 16:33:39,217 - INFO - Database created with 1000 deliveries
+2025-05-14 16:33:39,217 - INFO - Generating weather data...
+2025-05-14 16:33:39,227 - INFO - Weather data generated for period 2025-02-13 - 2025-05-14
+2025-05-14 16:33:39,227 - INFO - Extracting data from SQLite database...
+2025-05-14 16:33:39,239 - INFO - Extraction complete: 1000 records
+2025-05-14 16:33:39,239 - INFO - Transforming data...
+2025-05-14 16:33:39,239 - INFO - Generating tracking logs...
+2025-05-14 16:33:39,248 - INFO - Tracking logs generated
+2025-05-14 16:33:39,248 - INFO - Enriching with weather data...
+2025-05-14 16:33:39,252 - INFO - Weather enrichment complete
+2025-05-14 16:33:39,288 - INFO - Data transformation complete
+2025-05-14 16:33:39,288 - INFO - Validating and saving results...
+2025-05-14 16:33:39,292 - WARNING - Found 63 outliers in delivery time.
+2025-05-14 16:33:39,293 - INFO - Dataset Statistics:
+2025-05-14 16:33:39,294 - INFO -   total_deliveries: 1000
+2025-05-14 16:33:39,294 - INFO -   delayed_deliveries: 90
+2025-05-14 16:33:39,294 - INFO -   on_time_deliveries: 910
+2025-05-14 16:33:39,294 - INFO -   delay_rate: 9.0
+2025-05-14 16:33:39,294 - INFO -   avg_delivery_time: 98.71
+2025-05-14 16:33:39,294 - INFO -   min_delivery_time: 22.5
+2025-05-14 16:33:39,294 - INFO -   max_delivery_time: 756.5
+2025-05-14 16:33:39,311 - INFO - Results saved to output_data\deliveries.csv
+2025-05-14 16:33:39,312 - INFO - ETL pipeline completed successfully

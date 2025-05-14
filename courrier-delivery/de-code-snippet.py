@@ -1,5 +1,5 @@
 # SuperCourier - Mini ETL Pipeline
-# Starter code for the Data Engineering mini-challenge
+# Corrected code for proper delay calculation
 
 import sqlite3
 import pandas as pd
@@ -11,7 +11,6 @@ import random
 import os
 
 # Logging configuration
-
 LOG_FILE = 'info.log' 
 logging.basicConfig(
     level=logging.INFO,
@@ -27,10 +26,70 @@ logger = logging.getLogger('supercourier_mini_etl')
 BASE_DIR = 'output_data'
 DB_PATH = 'supercourier_mini.db'
 WEATHER_PATH = os.path.join(BASE_DIR, 'weather_data.json')
-OUTPUT_PATH = os.path.join(BASE_DIR, 'deliveries.csv')     
+OUTPUT_PATH = os.path.join(BASE_DIR, 'deliveries.csv')
 
+# Factor dictionaries
+PACKAGE_FACTORS = {
+    'Small': 1.0,
+    'Medium': 1.2,
+    'Large': 1.5,
+    'X-Large': 2.0,
+    'Special': 2.5
+}
 
-# 1. FUNCTION TO GENERATE SQLITE DATABASE (you can modify as needed)
+ZONE_FACTORS = {
+    'Urban': 1.2,
+    'Suburban': 1.0,
+    'Rural': 1.3,
+    'Industrial': 0.9,
+    'Shopping Center': 1.4
+}
+
+WEATHER_FACTORS = {
+    'Sunny': 1.0,
+    'Cloudy': 1.05,
+    'Rainy': 1.2,
+    'Windy': 1.1,
+    'Snowy': 1.8,
+    'Foggy': 1.3,
+    'Unknown': 1.0
+}
+
+# Function to calculate theoretical delivery time (without random variation)
+def calculate_theoretical_time(row):
+    """
+    Calculates the theoretical delivery time before random variation
+    """
+    # Base time: 30 + distance * 0.8 minutes
+    base_time = 30 + row['distance'] * 0.8
+    
+    # Apply package factor
+    adjusted_time = base_time * PACKAGE_FACTORS[row['package_type']]
+    
+    # Apply zone factor
+    adjusted_time = adjusted_time * ZONE_FACTORS[row['delivery_zone']]
+    
+    # Apply time of day factor
+    hour = row['hour']
+    if 7 <= hour < 10:  # Morning peak
+        adjusted_time *= 1.3
+    elif 16 <= hour < 19:  # Evening peak
+        adjusted_time *= 1.4
+    
+    # Apply day of week factor
+    weekday = row['weekday']
+    if weekday in ['Monday', 'Friday']:
+        adjusted_time *= 1.2
+    elif weekday in ['Saturday', 'Sunday']:
+        adjusted_time *= 0.9
+    
+    # Apply weather factor
+    weather_factor = WEATHER_FACTORS.get(row.get('weather_condition', 'Unknown'), 1.0)
+    adjusted_time *= weather_factor
+    
+    return adjusted_time
+
+# 1. FUNCTION TO GENERATE SQLITE DATABASE
 def create_sqlite_database():
     """
     Creates a simple SQLite database with a deliveries table
@@ -145,7 +204,7 @@ def generate_weather_data():
     logger.info(f"Weather data generated for period {start_date.strftime('%Y-%m-%d')} - {end_date.strftime('%Y-%m-%d')}")
     return weather_data
 
-# 3. EXTRACTION FUNCTIONS (to be completed)
+# 3. EXTRACTION FUNCTIONS
 def extract_sqlite_data():
     """
     Extracts delivery data from SQLite database
@@ -195,77 +254,19 @@ def generate_tracking_logs(df_deliveries):
         lambda zone: round(random.uniform(*zone_distance[zone]), 1)
     )
     
-    # Calculate theoretical delivery time based on the formula
-    package_factors = {
-        'Small': 1.0,
-        'Medium': 1.2,
-        'Large': 1.5,
-        'X-Large': 2.0,
-        'Special': 2.5
-    }
-    
-    zone_factors = {
-        'Urban': 1.2,
-        'Suburban': 1.0,
-        'Rural': 1.3,
-        'Industrial': 0.9,
-        'Shopping Center': 1.4
-    }
-    
-    # Calculate actual delivery time with some random variation
-    def calculate_actual_time(row):
-        # Base time: 30 + distance * 0.8 minutes
-        base_time = 30 + row['distance'] * 0.8
-        
-        # Apply package factor
-        adjusted_time = base_time * package_factors[row['package_type']]
-        
-        # Apply zone factor
-        adjusted_time = adjusted_time * zone_factors[row['delivery_zone']]
-        
-        # Apply time of day factor
-        hour = row['pickup_datetime'].hour
-        if 7 <= hour < 10:  # Morning peak
-            adjusted_time *= 1.3
-        elif 16 <= hour < 19:  # Evening peak
-            adjusted_time *= 1.4
-        
-        # Apply day of week factor
-        weekday = row['pickup_datetime'].weekday()
-        if weekday == 0 or weekday == 4:  # Monday (0) or Friday (4)
-            adjusted_time *= 1.2
-        elif weekday >= 5:  # Weekend
-            adjusted_time *= 0.9
-        
-        # Add some random variation (±20%)
-        variation = random.uniform(0.8, 1.2)
-        actual_time = adjusted_time * variation
-        
-        return round(actual_time, 1)
-    
-
+    # Add weekday and hour columns
     df_deliveries['weekday'] = df_deliveries['pickup_datetime'].dt.day_name()
     df_deliveries['hour'] = df_deliveries['pickup_datetime'].dt.hour
-    
-    df_deliveries['actual_delivery_time'] = df_deliveries.apply(calculate_actual_time, axis=1)
-    
-
-    df_deliveries['delivery_end_time'] = df_deliveries['pickup_datetime'] + pd.to_timedelta(df_deliveries['actual_delivery_time'], unit='m')
     
     logger.info("Tracking logs generated")
     return df_deliveries
 
- # 4. TRANSFORMATION FUNCTIONS (to be completed by participants)
-
+# 4. TRANSFORMATION FUNCTIONS
 def enrich_with_weather(df, weather_data):
     """
     Enriches the DataFrame with weather conditions
     """
     logger.info("Enriching with weather data...")
-    
-    # Debug: Check weather_data structure
-    logger.info(f"Weather data structure: {type(weather_data)}")
-    logger.info(f"Weather data keys sample: {list(weather_data.keys())[:3] if weather_data else 'Empty'}")
     
     # Function to get weather for a given timestamp
     def get_weather(timestamp):
@@ -301,60 +302,33 @@ def transform_data(df_deliveries, weather_data):
     
     # 1. Enrich with tracking logs (add distance and delivery times)
     df_enriched = generate_tracking_logs(df_deliveries)
-    print(df_enriched)
+    
     # 2. Enrich with weather data
     df_enriched = enrich_with_weather(df_enriched, weather_data)
-    print(df_enriched)
-    # 3. Determine theoretical delivery time and threshold
-    def calculate_threshold(row):
-        # Base time: 30 + distance * 0.8 minutes
-        base_time = 30 + row['distance'] * 0.8
-        
-
-        package_factors = {
-            'Small': 1.0, 'Medium': 1.2, 'Large': 1.5, 
-            'X-Large': 2.0, 'Special': 2.5
-        }
-        adjusted_time = base_time * package_factors[row['package_type']]
-
-        zone_factors = {
-            'Urban': 1.2, 'Suburban': 1.0, 'Rural': 1.3,
-            'Industrial': 0.9, 'Shopping Center': 1.4
-        }
-        adjusted_time = adjusted_time * zone_factors[row['delivery_zone']]
-  
-        hour = row['hour']
-        if 7 <= hour < 10:  
-            adjusted_time *= 1.3
-        elif 16 <= hour < 19:  
-            adjusted_time *= 1.4
-        
-
-        weekday = row['weekday']
-        if weekday in ['Monday', 'Friday']:
-            adjusted_time *= 1.2
-        elif weekday in ['Saturday', 'Sunday']:
-            adjusted_time *= 0.9
-            
-
-        weather_factors = {
-            'Sunny': 1.0, 'Cloudy': 1.05, 'Rainy': 1.2,
-            'Windy': 1.1, 'Snowy': 1.8, 'Foggy': 1.3,
-            'Unknown': 1.0
-        }
-        adjusted_time *= weather_factors.get(row['weather_condition'], 1.0)
-        
-        threshold = adjusted_time * 1.2
-        
-        return round(threshold, 1)
     
-    df_enriched['threshold_time'] = df_enriched.apply(calculate_threshold, axis=1)
+    # 3. Calculate theoretical delivery time (without random variation)
+    df_enriched['theoretical_time'] = df_enriched.apply(calculate_theoretical_time, axis=1)
     
+    # 4. Calculate threshold time (theoretical time * 1.2)
+    df_enriched['threshold_time'] = df_enriched['theoretical_time'] * 1.2
+    
+    # 5. Calculate actual delivery time (with random variation)
+    df_enriched['actual_delivery_time'] = df_enriched['theoretical_time'].apply(
+            lambda x: round(max(10, np.random.normal(x, x * 0.15)), 1)
+        )
+    
+    # 6. Calculate delivery end time
+    df_enriched['delivery_end_time'] = df_enriched['pickup_datetime'] + pd.to_timedelta(
+        df_enriched['actual_delivery_time'], unit='m'
+    )
+    
+    # 7. Determine status
     df_enriched['status'] = df_enriched.apply(
         lambda row: 'Delayed' if row['actual_delivery_time'] > row['threshold_time'] else 'On-time',
         axis=1
     )
     
+    # 8. Clean up and select final columns
     df_cleaned = df_enriched.fillna({
         'weather_condition': 'Unknown',
         'actual_delivery_time': df_enriched['actual_delivery_time'].median()
@@ -389,7 +363,7 @@ def transform_data(df_deliveries, weather_data):
     logger.info("Data transformation complete")
     return final_df
 
-# # 5. LOADING FUNCTION (to be completed)
+# 5. LOADING FUNCTION
 def save_results(df):
     """
     Saves the final DataFrame to CSV with validation
@@ -420,11 +394,12 @@ def save_results(df):
     if len(outliers) > 0:
         logger.warning(f"Found {len(outliers)} outliers in delivery time.")
     
-    # Generate simple statistics
+    # Generate statistics
     stats = {
         'total_deliveries': len(df),
         'delayed_deliveries': len(df[df['Status'] == 'Delayed']),
         'on_time_deliveries': len(df[df['Status'] == 'On-time']),
+        'delay_rate': round(len(df[df['Status'] == 'Delayed']) / len(df) * 100, 2),
         'avg_delivery_time': round(df['Actual_Delivery_Time'].mean(), 2),
         'min_delivery_time': df['Actual_Delivery_Time'].min(),
         'max_delivery_time': df['Actual_Delivery_Time'].max()
@@ -443,11 +418,10 @@ def save_results(df):
     
     # Save statistics to a separate file
     stats_df = pd.DataFrame([stats])
-    # stats_df.to_csv('output_data/statistics.csv', index=False)
+    stats_df.to_csv(os.path.join(BASE_DIR, 'statistics.csv'), index=False)
     
     logger.info(f"Results saved to {OUTPUT_PATH}")
     return True
-
 
 # MAIN FUNCTION
 def run_pipeline():
@@ -461,21 +435,21 @@ def run_pipeline():
         create_sqlite_database()
         weather_data = generate_weather_data()
         
-        #  Step 2: Extraction
+        # Step 2: Extraction
         df_deliveries = extract_sqlite_data()
         
         # Step 3: Transformation
         df_transformed = transform_data(df_deliveries, weather_data)
-        print(df_transformed)
-        #  # Step 4: Loading
+        
+        # Step 4: Loading
         save_results(df_transformed)
         
         logger.info("ETL pipeline completed successfully")
         return True
         
     except Exception as e:
-         logger.error(f"Error during pipeline execution: {str(e)}")
-         return False
+        logger.error(f"Error during pipeline execution: {str(e)}")
+        return False
 
 # Main entry point
 if __name__ == "__main__":
