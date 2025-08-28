@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-mlflow-server
+  labels:
+    app: jedha-mlflow
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: sample-mlflow-server # doit etre le meme que le label du template
+  template:
+    metadata:
+      labels:
+        app: sample-mlflow-server
+    spec:
+      containers:
+      - name: sample-mlflow-server
+        image: jedha/sample-mlflow-server:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: PORT
+          value: "8080"
+        - name: BACKEND_STORE_URI 
+          value: postgresql://postgres_db:mypassword@host.docker.internal:5430/northwind
+        - name: ARTIFACT_ROOT
+          value: 
+        - name: AWS_ACCESS_KEY_ID
+          value: 
+        - name: AWS_SECRET_ACCESS_KEY
+          value: 
